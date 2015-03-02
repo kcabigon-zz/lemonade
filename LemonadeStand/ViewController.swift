@@ -63,6 +63,10 @@ class ViewController: UIViewController {
     var arrayOfMatches:[String] = []
     var dollarsEarned = 0
     
+    // Weather
+    var weatherImage: UIImageView!
+    var temperature: Weather!
+    
     // Contants
     var kSixteenth:CGFloat = 1.0/16.0
     var kEighth:CGFloat = 1.0/8.0
@@ -171,56 +175,71 @@ class ViewController: UIViewController {
     }
     
     func startDayButtonPressed (button:UIButton) {
-        lemonadeRatio = Float(lemonsToMix)/Float(icecubesToMix)
-        if lemonadeRatio < Float(1) {
-            lemonadeMix = "diluted"
-        }
-        else if lemonadeRatio == Float(1) {
-            lemonadeMix = "equal parts"
-        }
-        else {
-            lemonadeMix = "acidic"
-        }
         
-        numberOfCustomers = Int(arc4random_uniform(UInt32(10)))
-        for var i = 0; i <= numberOfCustomers; i++ {
-            var tastePreference = Float(Float(arc4random())/Float(UINT32_MAX))
-            if tastePreference <= Float(0.4) {
-                arrayOfCustomers.append("acidic")
+        if lemonsToMix == 0 || icecubesToMix == 0 {
+            
+            showAlert("Nothing to Mix", message: "Add at least one of each ingredient")
+            
+        } else {
+            
+            clearWeather()
+            weatherContainer()
+            
+            lemonadeRatio = Float(lemonsToMix)/Float(icecubesToMix)
+            if lemonadeRatio < Float(1) {
+                lemonadeMix = "diluted"
             }
-            else if tastePreference <= Float(0.6) {
-                arrayOfCustomers.append("equal parts")
+            else if lemonadeRatio == Float(1) {
+                lemonadeMix = "equal parts"
             }
             else {
-                arrayOfCustomers.append("diluted")
+                lemonadeMix = "acidic"
             }
+            
+            numberOfCustomers = Int(arc4random_uniform(UInt32(10))) + temperature.temperature
+            for var i = 0; i <= numberOfCustomers; i++ {
+                var tastePreference = Float(Float(arc4random())/Float(UINT32_MAX))
+                if tastePreference <= Float(0.4) {
+                    arrayOfCustomers.append("acidic")
+                }
+                else if tastePreference <= Float(0.6) {
+                    arrayOfCustomers.append("equal parts")
+                }
+                else {
+                    arrayOfCustomers.append("diluted")
+                }
+            }
+            
+            for var i = 0; i < arrayOfCustomers.count; i++ {
+                if arrayOfCustomers[i] == lemonadeMix {
+                    arrayOfMatches.append("Paid!")
+                    dollarsEarned += 1
+                }
+                else {
+                    arrayOfMatches.append("No Match, No Revenue")
+                }
+            }
+            
+            dollars += dollarsEarned
+            updateMoney()
+            
+            println(lemonadeRatio)
+            println(lemonadeMix)
+            println(numberOfCustomers)
+            println(temperature.temperature)
+            println(arrayOfCustomers)
+            println(arrayOfMatches)
+            println(temperature.weather)
+            
+            showAlert("Your Day", message: "\(numberOfCustomers + 1) customers visited your stand, and since the weather was \(temperature.weather), there were \(temperature.temperature) more or less customers there. \(dollarsEarned) of them bought your lemonade, and you've earned \(dollarsEarned) dollars.")
+            
+            resetPurchaseAndMix()
+            dollarsEarned = 0
+            arrayOfCustomers = []
+            arrayOfMatches = []
+            
         }
         
-        for var i = 0; i < arrayOfCustomers.count; i++ {
-            if arrayOfCustomers[i] == lemonadeMix {
-                arrayOfMatches.append("Paid!")
-                dollarsEarned += 1
-            }
-            else {
-                arrayOfMatches.append("No Match, No Revenue")
-            }
-        }
-        
-        dollars += dollarsEarned
-        updateMoney()
-        
-        println(lemonadeRatio)
-        println(lemonadeMix)
-        println(numberOfCustomers)
-        println(arrayOfCustomers)
-        println(arrayOfMatches)
-        
-        showAlert("Your Day", message: "\(numberOfCustomers + 1) customers visited your stand, \(dollarsEarned) of them bought your lemonade, and you've earned \(dollarsEarned) dollars")
-        
-        resetPurchaseAndMix()
-        dollarsEarned = 0
-        arrayOfCustomers = []
-        arrayOfMatches = []
     }
     
 
@@ -384,7 +403,29 @@ class ViewController: UIViewController {
         startDayButton.frame = CGRect(x: sellContainer.bounds.origin.x + (5 * kSixteenth * sellContainer.frame.width), y: sellContainer.bounds.origin.y + (5 * kEighth * sellContainer.frame.height), width: sellContainer.frame.width * 3 * kEighth, height: sellContainer.frame.height * kFourth)
         startDayButton.addTarget(self, action: "startDayButtonPressed:", forControlEvents: UIControlEvents.TouchUpInside)
         sellContainer.addSubview(startDayButton)
+        
+        weatherImage = UIImageView()
+        weatherImage.frame = CGRect(x: sellContainer.bounds.origin.x + 30, y: sellContainer.bounds.origin.y + (5 * kEighth * sellContainer.frame.height), width: sellContainer.frame.width * kEighth, height: sellContainer.frame.height * kFourth)
+        sellContainer.addSubview(weatherImage)
+        
     }
+    
+    func weatherContainer () {
+        
+        weatherImage = UIImageView()
+        temperature = WeatherFactory.randomizeWeather()
+        weatherImage.image = temperature.image
+        weatherImage.frame = CGRect(x: sellContainer.bounds.origin.x + 30, y: sellContainer.bounds.origin.y + (5 * kEighth * sellContainer.frame.height), width: sellContainer.frame.width * kEighth, height: sellContainer.frame.height * kFourth)
+        sellContainer.addSubview(weatherImage)
+        
+    }
+    
+    func clearWeather () {
+        
+        weatherImage.removeFromSuperview()
+        
+    }
+    
     
     func centerLabel (label: UILabel, container: UIView, yvalue: CGFloat) {
         label.center = CGPoint(x: container.bounds.origin.x + (kHalf * container.frame.width), y: container.bounds.origin.y + (yvalue * kFourth * container.frame.height))
